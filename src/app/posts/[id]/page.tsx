@@ -36,8 +36,8 @@ const Detail = () => {
 
         setThumbnailImageUrl(publicUrl);
       }
+      setIsLoading(false);
     };
-    setIsLoading(false);
 
     fetcher();
   }, [id]);
