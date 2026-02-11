@@ -4,6 +4,7 @@
 import { Category } from "@/app/api/admin/posts/[id]/route";
 import React, { useEffect } from "react";
 import styles from "./_styles/CategoriesSelect.module.css";
+import { useSupabaseSession } from "../../../_hooks/useSupabaseSession";
 
 // このコンポーネントは、親（PostForm）から次の３つを受け取る。
 interface Props {
@@ -20,6 +21,7 @@ export const CategoriesSelect: React.FC<Props> = ({
   setSelectedCategories,
   disabled,
 }) => {
+  const { token } = useSupabaseSession();
   // 全カテゴリー一覧を保持するstate
   // categoriesはAPIから取得した「全カテゴリー一覧」、setCategoriesはそれを更新する関数
   const [categories, setCategories] = React.useState<Category[]>([]);
@@ -47,14 +49,21 @@ export const CategoriesSelect: React.FC<Props> = ({
 
   // useEffect でカテゴリー一覧を API から取得
   useEffect(() => {
+    if (!token) return;
+
     const fetcher = async () => {
-      const res = await fetch("/api/admin/categories");
+      const res = await fetch("/api/admin/categories",{
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+      });
       const { categories } = await res.json();
       // 返ってきたcategoriesをstateに保存
       setCategories(categories);
     };
     fetcher();
-  }, []);
+  }, [token]);
 
   return (
     <div className={styles.Container}>

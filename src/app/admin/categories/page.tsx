@@ -6,23 +6,32 @@ import Link from "next/link";
 import styles from "../posts/_styles/AdminHome.module.css";
 import { useState, useEffect } from "react";
 import { CategoriesIndexResponse } from "./_types/CategoriesIndexResponse";
+import { useSupabaseSession } from "../../_hooks/useSupabaseSession";
 
 export default function AdminCategoriesHome() {
   const [categories, setCategories] = useState<
     CategoriesIndexResponse["categories"]
   >([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { token } = useSupabaseSession();
 
   useEffect(() => {
+    if (!token) return;
+
     const fethcer = async () => {
-      const res = await fetch("/api/admin/categories");
+      const res = await fetch("/api/admin/categories", {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+      });
       const { categories } = await res.json();
       setCategories(categories);
       setIsLoading(false);
     };
 
     fethcer();
-  }, []);
+  }, [token]);
 
   if (isLoading) {
     return <p>読み込み中...</p>;

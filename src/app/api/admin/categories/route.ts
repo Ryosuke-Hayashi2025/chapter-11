@@ -2,7 +2,8 @@
 // 管理者_カテゴリー一覧取得API
 
 import { prisma } from "@/app/_libs/prisma";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { supabase } from "@/app/_libs/supabase";
 
 export type CategoriesIndexResponse = {
   categories: {
@@ -13,7 +14,17 @@ export type CategoriesIndexResponse = {
   }[];
 };
 
-export const GET = async () => {
+export const GET = async (request: NextRequest) => {
+  // GET関数の引数からrequestを受け取り、その中にAuthorizationヘッダーが含まれているので、それを取り出す
+  const token = request.headers.get("Authorization") ?? "";
+
+  // supabaseに対してtokenを送る
+  const { error } = await supabase.auth.getUser(token);
+
+  // 送ったtokenが正しくない場合、errorが返却されるので、クライアントにもエラーを返す
+  if (error)
+    return NextResponse.json({ message: error.message }, { status: 400 }); // tokenが正しい場合、以降が実行される
+
   try {
     const categories = await prisma.category.findMany({
       orderBy: {
@@ -45,6 +56,16 @@ export type CreateCategoryResponse = {
 
 // POSTという命名にすることで、POSTリクエストの時にこの関数が呼ばれる
 export const POST = async (request: Request) => {
+  // POST関数の引数からrequestを受け取り、その中にAuthorizationヘッダーが含まれているので、それを取り出す
+  const token = request.headers.get("Authorization") ?? "";
+
+  // supabaseに対してtokenを送り、ユーザー情報をオブジェクトで返却
+  const { error } = await supabase.auth.getUser(token);
+
+  // 送ったtokenが正しくない場合、errorが返却されるので、クライアントにもエラーを返す
+  if (error)
+    return NextResponse.json({ message: error.message }, { status: 400 }); // tokenが正しい場合、以降が実行される
+
   try {
     // リクエストのbodyを取得
     const body: CreateCategoryRequestBody = await request.json();

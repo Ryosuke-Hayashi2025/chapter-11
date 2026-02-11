@@ -5,20 +5,23 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PostForm } from "../_components/PostForm";
-import { Category } from '@/app/api/admin/posts/[id]/route'
+import { Category } from "@/app/api/admin/posts/[id]/route";
 import { CreatePostRequestBody } from "@/app/api/admin/posts/route";
+import { useSupabaseSession } from "../../../_hooks/useSupabaseSession";
 
 export default function AdminCreatePost() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [thumbnailImageKey, setThumbnailImageKey] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const { token } = useSupabaseSession();
 
   const handleSubmit = async (e: React.FormEvent) => {
-
     e.preventDefault();
+
+    if (!token) return;
 
     try {
       setIsSubmitting(true);
@@ -26,17 +29,19 @@ export default function AdminCreatePost() {
       const body: CreatePostRequestBody = {
         title,
         content,
-        thumbnailUrl,
+        thumbnailImageKey,
         categories,
       };
 
       const res = await fetch("/api/admin/posts", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
         body: JSON.stringify(body),
       });
 
-    
       const { id } = await res.json();
       router.push(`/admin/posts/${id}`);
       alert("記事を作成しました。");
@@ -59,8 +64,8 @@ export default function AdminCreatePost() {
         setTitle={setTitle}
         content={content}
         setContent={setContent}
-        thumbnailUrl={thumbnailUrl}
-        setThumbnailUrl={setThumbnailUrl}
+        thumbnailImageKey={thumbnailImageKey}
+        setThumbnailImageKey={setThumbnailImageKey}
         categories={categories}
         setCategories={setCategories}
         onSubmit={handleSubmit}

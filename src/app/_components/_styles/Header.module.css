@@ -13,4 +13,10 @@
 .Link {
   text-decoration: none;
   color: white;
+  margin-right: 16px;
+}
+
+/* 最後のリンクだけ margin を消す */
+.Link:last-child {
+  margin-right: 0;
 }

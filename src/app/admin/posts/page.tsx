@@ -6,21 +6,30 @@ import Link from "next/link";
 import styles from "./_styles/AdminHome.module.css";
 import { useState, useEffect } from "react";
 import { PostsIndexResponse } from "./_types/PostsIndexResponse";
+import { useSupabaseSession } from "../../_hooks/useSupabaseSession";
 
 export default function AdminPostsHome() {
   const [posts, setPosts] = useState<PostsIndexResponse["posts"]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const { token } = useSupabaseSession();
 
   useEffect(() => {
+    if (!token) return;
+
     const fetcher = async () => {
-      const res = await fetch("/api/posts");
+      const res = await fetch("/api/admin/posts", {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+      });
       const { posts } = await res.json();
       setPosts(posts);
       setIsLoading(false);
     };
 
     fetcher();
-  }, []);
+  }, [token]);
 
   if (isLoading) {
     return <p>読み込み中...</p>;
