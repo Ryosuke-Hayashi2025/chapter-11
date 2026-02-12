@@ -2,56 +2,58 @@
 // 管理者_記事の新規作成ページ
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PostForm } from "../_components/PostForm";
 import { Category } from "@/app/api/admin/posts/[id]/route";
 import { CreatePostRequestBody } from "@/app/api/admin/posts/route";
 import { useSupabaseSession } from "../../../_hooks/useSupabaseSession";
+import { useForm, FieldErrors } from "react-hook-form";
 
 export default function AdminCreatePost() {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [thumbnailImageKey, setThumbnailImageKey] = useState("");
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const { token } = useSupabaseSession();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  // 既定値を準備
+  const defaultValues = {
+    title: "",
+    content: "",
+    thumbnailImageKey: "",
+    categories: [] as Category[],
+  };
+  // フォームを初期化
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setValue,
+    watch,
+    control,
+  } = useForm({
+    defaultValues,
+  });
+  // サブミット時の処理
+  const onSubmit = async (data: CreatePostRequestBody) => {
     if (!token) return;
 
     try {
-      setIsSubmitting(true);
-
-      const body: CreatePostRequestBody = {
-        title,
-        content,
-        thumbnailImageKey,
-        categories,
-      };
-
       const res = await fetch("/api/admin/posts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: token,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(data),
       });
-
       const { id } = await res.json();
+
       router.push(`/admin/posts/${id}`);
+
       alert("記事を作成しました。");
     } catch (error) {
       console.error("記事の作成に失敗しました:", error);
       alert("記事の作成に失敗しました。");
-    } finally {
-      setIsSubmitting(false);
     }
   };
+  const onError = (err: FieldErrors) => console.log(err);
 
   return (
     <div className="">
@@ -60,16 +62,13 @@ export default function AdminCreatePost() {
       </div>
       <PostForm
         mode="new"
-        title={title}
-        setTitle={setTitle}
-        content={content}
-        setContent={setContent}
-        thumbnailImageKey={thumbnailImageKey}
-        setThumbnailImageKey={setThumbnailImageKey}
-        categories={categories}
-        setCategories={setCategories}
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit(onSubmit, onError)}
         disabled={isSubmitting}
+        register={register}
+        errors={errors}
+        setValue={setValue}
+        watch={watch}
+        control={control}
       />
     </div>
   );

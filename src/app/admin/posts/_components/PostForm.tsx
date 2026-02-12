@@ -1,48 +1,53 @@
 // app/admin/posts/_componets/PostForm.tsx
 // 管理者_記事の更新・削除・新規作成ページ（共通）
 
-// import React from "react";
 import React, { useEffect, useState, ChangeEvent } from "react";
 import { CategoriesSelect } from "./CategoriesSelect";
-import { Category } from "@/app/api/admin/posts/[id]/route";
+import {
+  UpdatePostRequestBody,
+} from "@/app/api/admin/posts/[id]/route";
 import styles from "./_styles/PostForm.module.css";
 import { supabase } from "@/app/_libs/supabase";
 import { v4 as uuidv4 } from "uuid";
 import Image from "next/image";
+import {
+  UseFormRegister,
+  FieldErrors,
+  UseFormSetValue,
+  UseFormWatch,
+  Controller,
+  Control,
+} from "react-hook-form";
 
 interface Props {
   mode: "new" | "edit";
-  title: string;
-  setTitle: (title: string) => void;
-  content: string;
-  setContent: (content: string) => void;
-  thumbnailImageKey: string;
-  setThumbnailImageKey: (key: string) => void;
-  categories: Category[];
-  setCategories: (categories: Category[]) => void;
   onSubmit: (e: React.FormEvent) => void;
   onDelete?: () => void;
   disabled: boolean;
+  register: UseFormRegister<UpdatePostRequestBody>;
+  errors: FieldErrors<UpdatePostRequestBody>;
+  setValue: UseFormSetValue<UpdatePostRequestBody>;
+  watch: UseFormWatch<UpdatePostRequestBody>;
+  control: Control<UpdatePostRequestBody>;
 }
 
 export const PostForm: React.FC<Props> = ({
   mode,
-  title,
-  setTitle,
-  content,
-  setContent,
-  thumbnailImageKey,
-  setThumbnailImageKey,
-  categories,
-  setCategories,
   onSubmit,
   onDelete,
   disabled,
+  register,
+  errors,
+  setValue,
+  watch,
+  control,
 }) => {
   // Imageタグのsrcにセットする画像URLを持たせるstate
   const [thumbnailImageUrl, setThumbnailImageUrl] = useState<null | string>(
     null,
   );
+
+  const thumbnailImageKey = watch("thumbnailImageKey");
 
   useEffect(() => {
     if (!thumbnailImageKey) return; // アップロード時に取得した、thumbnailImageKeyを用いて画像のURLを取得
@@ -87,7 +92,7 @@ export const PostForm: React.FC<Props> = ({
     }
 
     // data.pathに、画像固有のkeyが入っているので、thumbnailImageKeyに格納する
-    setThumbnailImageKey(data.path);
+    setValue("thumbnailImageKey", data.path);
   };
 
   return (
@@ -99,11 +104,17 @@ export const PostForm: React.FC<Props> = ({
         <input
           type="text"
           id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
           className={styles.Input}
           disabled={disabled}
+          {...register("title", {
+            required: "必須入力です",
+            maxLength: {
+              value: 20,
+              message: "タイトルは20文字以内にしてください",
+            },
+          })}
         />
+        <div>{errors.title?.message}</div>
       </div>
       <div>
         <label htmlFor="content" className={styles.Label}>
@@ -111,11 +122,17 @@ export const PostForm: React.FC<Props> = ({
         </label>
         <textarea
           id="content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
           className={styles.Input}
           disabled={disabled}
+          {...register("content", {
+            required: "必須入力です",
+            maxLength: {
+              value: 20,
+              message: "内容は100文字以内にしてください",
+            },
+          })}
         />
+        <div>{errors.content?.message}</div>
       </div>
       <div>
         <label htmlFor="thumbnailImageKey" className={styles.Label}>
@@ -143,10 +160,16 @@ export const PostForm: React.FC<Props> = ({
         <label htmlFor="categories" className={styles.Label}>
           カテゴリー
         </label>
-        <CategoriesSelect
-          selectedCategories={categories}
-          setSelectedCategories={setCategories}
-          disabled={disabled}
+        <Controller
+          name="categories"
+          control={control}
+          render={({ field }) => (
+            <CategoriesSelect
+              value={field.value}
+              onChange={field.onChange}
+              disabled={disabled}
+            />
+          )}
         />
       </div>
       <div className={styles.ButtonRow}>

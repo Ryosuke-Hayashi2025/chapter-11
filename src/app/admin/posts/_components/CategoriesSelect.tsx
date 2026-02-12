@@ -9,16 +9,16 @@ import { useSupabaseSession } from "../../../_hooks/useSupabaseSession";
 // このコンポーネントは、親（PostForm）から次の３つを受け取る。
 interface Props {
   // 現在選択されているカテゴリーの配列
-  selectedCategories: Category[];
+  value: Category[];
   // 選択されたカテゴリーを更新する関数
-  setSelectedCategories: (selectedCategories: Category[]) => void;
+  onChange: (categories: Category[]) => void;
   // 編集不可（読み取り専用）かどうか
   disabled: boolean;
 }
 
 export const CategoriesSelect: React.FC<Props> = ({
-  selectedCategories,
-  setSelectedCategories,
+  value,
+  onChange,
   disabled,
 }) => {
   const { token } = useSupabaseSession();
@@ -31,20 +31,17 @@ export const CategoriesSelect: React.FC<Props> = ({
 
     // そのカテゴリーが選択済みかどうか調べる
     // selectedCategoriesの中に、クリックされた id のカテゴリーがあるか？
-    const exists = selectedCategories.some((category) => category.id === id);
+    const exists = value.some((category) => category.id === id);
 
     // すでに選択されている場合 → 解除（配列から削除）
     if (exists) {
-      setSelectedCategories(
-        selectedCategories.filter((category) => category.id !== id),
-      );
-      return;
+      onChange(value.filter((category) => category.id !== id));
+      // 未選択なら → categories（全カテゴリー）から探して追加
+    } else {
+      const category = categories.find((c) => c.id === id);
+      if (!category) return;
+      onChange([...value, category]);
     }
-
-    // 未選択なら → categories（全カテゴリー）から探して追加　※スプレッド構文 [...] で新しい配列を作る
-    const category = categories.find((c) => c.id === id);
-    if (!category) return;
-    setSelectedCategories([...selectedCategories, category]);
   };
 
   // useEffect でカテゴリー一覧を API から取得
@@ -52,7 +49,7 @@ export const CategoriesSelect: React.FC<Props> = ({
     if (!token) return;
 
     const fetcher = async () => {
-      const res = await fetch("/api/admin/categories",{
+      const res = await fetch("/api/admin/categories", {
         headers: {
           "Content-Type": "application/json",
           Authorization: token,
@@ -70,7 +67,7 @@ export const CategoriesSelect: React.FC<Props> = ({
       <div className={styles.ButtonWrap}>
         {categories.map((category) => {
           // isSelected で「選択済みかどうか」を判定
-          const isSelected = selectedCategories.some(
+          const isSelected = value.some(
             (selected) => selected.id === category.id,
           );
           return (

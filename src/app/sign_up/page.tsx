@@ -1,88 +1,99 @@
-'use client'
+// app/sign_up/page.tsx
+"use client";
 
-import { supabase } from '@/app/_libs/supabase'
-import { useState } from 'react'
-import styles from './_styles/Signup.module.css'
+import { supabase } from "@/app/_libs/supabase";
+import styles from "./_styles/Signup.module.css";
+import { useForm,FieldErrors } from "react-hook-form";
+
+type FormData = {
+  email: string;
+  password: string;
+};
 
 export default function Page() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-
-    setIsSubmitting(true)
-
+  // 既定値を準備
+  const defaultValues = {
+    email: "",
+    password: "",
+  };
+  // フォームを初期化
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm({
+    defaultValues,
+  });
+  // サブミット時の処理
+  const onSubmit = async (data: FormData) => {
     const { error } = await supabase.auth.signUp({
-      email,
-      password,
+      email: data.email,
+      password: data.password,
       options: {
         emailRedirectTo: `http://localhost:3000/login`,
       },
-    })
+    });
     if (error) {
-      alert('登録に失敗しました')
+      alert("登録に失敗しました");
     } else {
-      setEmail('')
-      setPassword('')
-      alert('確認メールを送信しました。')
+      alert("確認メールを送信しました。");
+      reset();
     }
-    setIsSubmitting(false)
-  }
+  };
+  const onError = (err: FieldErrors<FormData>) => console.log(err);
 
   return (
     <div className={styles.container}>
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form onSubmit={handleSubmit(onSubmit, onError)} className={styles.form}>
         <div>
-          <label
-            htmlFor="email"
-            className={styles.label}
-          >
+          <label htmlFor="email" className={styles.label}>
             メールアドレス
           </label>
           <input
             type="email"
-            name="email"
             id="email"
             className={styles.input}
             placeholder="name@company.com"
-            required
-            onChange={(e) => setEmail(e.target.value)}
-            value={email}
-            disabled={isSubmitting}
+            {...register("email", {
+              required: "メールアドレスは必須入力です",
+              maxLength: {
+                value: 50,
+                message: "メールアドレスは50文字以内にしてください",
+              },
+              pattern: {
+                value: /^[\w\-.]+@[\w\-.]+\.[a-zA-Z]{2,}$/,
+                message: "メールアドレスの形式が不正です",
+              },
+            })}
           />
+          <div>{errors.email?.message}</div>
         </div>
         <div>
-          <label
-            htmlFor="password"
-            className="block mb-2 text-sm font-medium text-gray-900"
-          >
+          <label htmlFor="password" className={styles.label}>
             パスワード
           </label>
           <input
             type="password"
-            name="password"
             id="password"
-            placeholder="••••••••"
             className={styles.input}
-            required
-            onChange={(e) => setPassword(e.target.value)}
-            value={password}
-            disabled={isSubmitting}
+            placeholder="••••••••"
+            {...register("password", {
+              required: "パスワードは必須入力です",
+              maxLength: {
+                value: 20,
+                message: "パスワードは20文字以内にしてください",
+              },
+            })}
           />
+          <div>{errors.password?.message}</div>
         </div>
-
         <div>
-          <button
-            type="submit"
-            className={styles.button}
-            disabled={isSubmitting}
-          >
+          <button type="submit" disabled={isSubmitting}>
             登録
           </button>
         </div>
       </form>
     </div>
-  )
+  );
 }

@@ -1,84 +1,99 @@
-'use client'
+// app/sign_in/page.tsx
+"use client";
 
-import { supabase } from '@/app/_libs/supabase'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import styles from './_styles/Signin.module.css'
+import { supabase } from "@/app/_libs/supabase";
+import { useRouter } from "next/navigation";
+import styles from "./_styles/Signin.module.css";
+import { useForm,FieldErrors } from "react-hook-form";
+
+type FormData = {
+  email: string;
+  password: string;
+};
 
 export default function Page() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  // 既定値を準備
+  const defaultValues = {
+    email: "",
+    password: "",
+  };
+  // フォームを初期化
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm({
+    defaultValues,
+  });
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  const router = useRouter();
 
-    setIsLoading(true)
-
+  const onSubmit = async (data: FormData) => {
     const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
+      email: data.email,
+      password: data.password,
+    });
     if (error) {
-      alert('ログインに失敗しました')
+      alert("ログインに失敗しました");
     } else {
-      router.replace('/admin/posts')
+      router.replace("/admin/posts");
+      reset();
     }
-    setIsLoading(false)
-  }
+  };
+  const onError = (err: FieldErrors<FormData>) => console.log(err);
 
   return (
     <div className={styles.container}>
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form onSubmit={handleSubmit(onSubmit, onError)} className={styles.form}>
         <div>
-          <label
-            htmlFor="email"
-            className={styles.label}
-          >
+          <label htmlFor="email" className={styles.label}>
             メールアドレス
           </label>
           <input
             type="email"
-            name="email"
             id="email"
             className={styles.input}
             placeholder="name@company.com"
-            required
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={isLoading}
+            {...register("email", {
+              required: "メールアドレスは必須入力です",
+              maxLength: {
+                value: 50,
+                message: "メールアドレスは50文字以内にしてください",
+              },
+              pattern: {
+                value: /^[\w\-.]+@[\w\-.]+\.[a-zA-Z]{2,}$/,
+                message: "メールアドレスの形式が不正です",
+              },
+            })}
           />
+          <div>{errors.email?.message}</div>
         </div>
         <div>
-          <label
-            htmlFor="password"
-            className="block mb-2 text-sm font-medium text-gray-900"
-          >
+          <label htmlFor="password" className={styles.label}>
             パスワード
           </label>
           <input
             type="password"
-            name="password"
             id="password"
             placeholder="••••••••"
             className={styles.input}
-            required
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading}
+            {...register("password", {
+              required: "パスワードは必須入力です",
+              maxLength: {
+                value: 20,
+                message: "パスワードは20文字以内にしてください",
+              },
+            })}
           />
+          <div>{errors.password?.message}</div>
         </div>
-
         <div>
-          <button
-            type="submit"
-            className={styles.button}
-            disabled={isLoading}
-          >
+          <button type="submit" className={styles.button} disabled={isSubmitting}>
             ログイン
           </button>
         </div>
       </form>
     </div>
-  )
+  );
 }

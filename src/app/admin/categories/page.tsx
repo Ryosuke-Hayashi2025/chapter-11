@@ -4,38 +4,19 @@
 
 import Link from "next/link";
 import styles from "../posts/_styles/AdminHome.module.css";
-import { useState, useEffect } from "react";
 import { CategoriesIndexResponse } from "./_types/CategoriesIndexResponse";
 import { useSupabaseSession } from "../../_hooks/useSupabaseSession";
+import { useAdminFetch } from "../../admin/_hooks/useAdminFetch";
 
 export default function AdminCategoriesHome() {
-  const [categories, setCategories] = useState<
-    CategoriesIndexResponse["categories"]
-  >([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const { token } = useSupabaseSession();
+ const { data, error, isLoading } = useAdminFetch<CategoriesIndexResponse>(
+    "admin/categories",
+    token ?? undefined,
+  );
 
-  useEffect(() => {
-    if (!token) return;
-
-    const fethcer = async () => {
-      const res = await fetch("/api/admin/categories", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token,
-        },
-      });
-      const { categories } = await res.json();
-      setCategories(categories);
-      setIsLoading(false);
-    };
-
-    fethcer();
-  }, [token]);
-
-  if (isLoading) {
-    return <p>読み込み中...</p>;
-  }
+  if (error) return <div>エラーが発生しました</div>;
+  if (isLoading) return <div>読み込み中...</div>;
 
   return (
     <div className="">
@@ -45,7 +26,7 @@ export default function AdminCategoriesHome() {
           新規作成
         </Link>
       </div>
-      {categories.map((category) => (
+      {data?.categories.map((category) => (
         <div key={category.id} className={styles.Block}>
           <Link
             href={`/admin/categories/${category.id}`}

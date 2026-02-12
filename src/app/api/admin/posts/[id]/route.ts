@@ -81,7 +81,7 @@ export const GET = async (
 export type UpdatePostRequestBody = {
   title: string;
   content: string;
-  categories: { id: number }[];
+  categories: Category[];
   thumbnailImageKey: string;
 };
 
