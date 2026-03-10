@@ -5,31 +5,26 @@ import React from "react";
 import styles from "./_styles/Home.module.css";
 import Link from "next/link";
 import { PublicPost } from "./_types/PublicPost";
-import { useState, useEffect } from "react";
+// import useSWR from "swr";
+import { useFetch } from "./_hooks/useFetch";
+
+// 引数に渡されたURLにfetchして、レスポンスをJSONとして返す
+// const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const Home = () => {
-  const [posts, setPosts] = useState<PublicPost[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  // useSWRでデータ取得
+  // const { data, error, isLoading } = useSWR<{ posts: PublicPost[] }>(
+  //   "/api/posts",
+    // fetcher,
+  // );
+  const { data, error, isLoading } = useFetch<{ posts: PublicPost[] }>("posts");
 
-  useEffect(() => {
-    const fetcher = async () => {
-      const res = await fetch("/api/posts");
-      const { posts } = await res.json();
-      setPosts(posts);
-
-      setIsLoading(false);
-    };
-
-    fetcher();
-  }, []);
-
-  if (isLoading) {
-    return <p>読み込み中...</p>;
-  }
+  if (error) return <div>エラーが発生しました</div>;
+  if (isLoading) return <div>読み込み中...</div>;
 
   return (
     <div className={styles.container}>
-      {posts.map((elem) => (
+      {data?.posts.map((elem) => (
         <div key={elem.id} className={styles.Block}>
           <Link href={`/posts/${elem.id}`} className={styles.Link}>
             <div>

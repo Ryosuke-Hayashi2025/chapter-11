@@ -7,11 +7,16 @@ import styles from "./_styles/Detail.module.css";
 import { PublicPost } from "../../_types/PublicPost";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { supabase } from "@/app/_libs/supabase";
 
 const Detail = () => {
   const { id } = useParams<{ id: string }>();
 
   const [post, setPost] = useState<PublicPost | null>(null);
+
+  const [thumbnailImageUrl, setThumbnailImageUrl] = useState<string | null>(
+    null,
+  );
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -22,6 +27,15 @@ const Detail = () => {
       const res = await fetch(`/api/posts/${id}`);
       const { post } = await res.json();
       setPost(post);
+      if (post && post.thumbnailImageKey) {
+        const {
+          data: { publicUrl },
+        } = supabase.storage
+          .from("post_thumbnail")
+          .getPublicUrl(post.thumbnailImageKey);
+
+        setThumbnailImageUrl(publicUrl);
+      }
       setIsLoading(false);
     };
 
@@ -40,12 +54,14 @@ const Detail = () => {
     <div className={styles.container}>
       <div>
         <div>
-          <Image
-            height={400}
-            width={800}
-            src={post.thumbnailUrl}
-            alt="記事画像"
-          />
+          {thumbnailImageUrl && (
+            <Image
+              height={400}
+              width={800}
+              src={thumbnailImageUrl}
+              alt="記事画像"
+            />
+          )}
           <div className={styles.Tag}>
             <div className={styles.Date}>
               {new Date(post.createdAt).toLocaleDateString("ja-JP")}

@@ -1,0 +1,46 @@
+/* AdminLayout.module.css */
+
+/* 全体レイアウト（ヘッダーの下にメインエリアを配置） */
+.wrapper {
+  display: flex;
+  height: calc(100vh - 72px); /* Header の高さ分を引く */
+}
+
+/* サイドバー */
+.aside {
+  width: 200px;
+  background-color: #f9f9f9;
+  padding: 16px;
+  box-sizing: border-box;
+  border-right: 1px solid #e5e5e5;
+}
+
+/* サイドバーのリンク */
+.navLink {
+  display: block;
+  padding: 16px;
+  text-decoration: none;
+  color: #333;
+  font-weight: bold;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.navLink:hover {
+  background-color: #e0f0ff;
+}
+
+/* 選択中のリンク */
+.selected {
+  background-color: #e0f0ff;
+}
+
+/* メインエリア（右側） */
+.main {
+  flex: 1;
+  padding: 24px;
+  background-color: #fff;
+  overflow-y: auto;
+  box-sizing: border-box;
+}

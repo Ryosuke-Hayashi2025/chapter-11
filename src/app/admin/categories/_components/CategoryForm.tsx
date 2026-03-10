@@ -3,38 +3,45 @@
 
 import React from "react";
 import styles from "./_styles/CategoryForm.module.css";
+import { UseFormRegister, FieldErrors } from "react-hook-form";
 
 interface Props {
   mode: "new" | "edit";
-  name: string;
-  setName: (title: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onDelete?: () => void;
   disabled: boolean;
+  register: UseFormRegister<{ name: string }>;
+  errors: FieldErrors<{ name: string }>;
 }
 
 export const CategoryForm: React.FC<Props> = ({
   mode,
-  name,
-  setName,
   onSubmit,
   onDelete,
   disabled,
+  register,
+  errors,
 }) => {
   return (
     <form onSubmit={onSubmit} className={styles.Form}>
       <div>
-        <label htmlFor="title" className={styles.Label}>
+        <label htmlFor="name" className={styles.Label}>
           カテゴリー名
         </label>
         <input
           type="text"
-          id="title"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          id="name"
           className={styles.Input}
           disabled={disabled}
+          {...register("name", {
+            required: "必須入力です",
+            maxLength: {
+              value: 20,
+              message: "カテゴリーは20文字以内にしてください",
+            },
+          })}
         />
+        <div>{errors.name?.message}</div>
       </div>
       <div className={styles.ButtonRow}>
         <button
